@@ -1,7 +1,7 @@
 package com.kingdoms.plugin;
 
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.server.core.modules.interaction.interaction.Interaction;
+import com.hypixel.hytale.protocol.Interaction;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.kingdoms.plugin.building.BuildingManager;
@@ -41,7 +41,7 @@ public class KingdomsPlugin extends JavaPlugin {
         LOGGER.atInfo().log("Setting up Kingdoms plugin");
         
         // Register custom interaction for placing blueprints
-        this.getCodecRegistry(Interaction.CODEC).register(
+        Interaction.CODEC.register(
             "kingdoms_place_blueprint", 
             PlaceBlueprintInteraction.class, 
             PlaceBlueprintInteraction.CODEC

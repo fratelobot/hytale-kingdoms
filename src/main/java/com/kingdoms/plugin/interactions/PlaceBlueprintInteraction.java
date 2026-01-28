@@ -4,14 +4,15 @@ import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.modules.interaction.interaction.InteractionContext;
-import com.hypixel.hytale.server.core.modules.interaction.interaction.InteractionState;
-import com.hypixel.hytale.server.core.modules.interaction.interaction.SimpleInstantInteraction;
-import com.hypixel.hytale.server.core.modules.interaction.interaction.cooldown.CooldownHandler;
-import com.hypixel.hytale.server.core.universe.Player;
-import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.protocol.InteractionState;
 import com.hypixel.hytale.protocol.InteractionType;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.InteractionContext;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHandler;
+import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInstantInteraction;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.kingdoms.plugin.KingdomsPlugin;
 import com.kingdoms.plugin.items.BlueprintItem;
 
@@ -25,6 +26,7 @@ public class PlaceBlueprintInteraction extends SimpleInstantInteraction {
 
     public static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
+    @Nonnull
     public static final BuilderCodec<PlaceBlueprintInteraction> CODEC = BuilderCodec.builder(
         PlaceBlueprintInteraction.class, 
         PlaceBlueprintInteraction::new, 
@@ -33,27 +35,27 @@ public class PlaceBlueprintInteraction extends SimpleInstantInteraction {
 
     @Override
     protected void firstRun(@Nonnull InteractionType interactionType, 
-                           @Nonnull InteractionContext interactionContext, 
+                           @Nonnull InteractionContext context, 
                            @Nonnull CooldownHandler cooldownHandler) {
         
-        CommandBuffer<EntityStore> commandBuffer = interactionContext.getCommandBuffer();
+        CommandBuffer<EntityStore> commandBuffer = context.getCommandBuffer();
         if (commandBuffer == null) {
-            interactionContext.getState().state = InteractionState.Failed;
+            context.getState().state = InteractionState.Failed;
             LOGGER.atWarning().log("CommandBuffer is null");
             return;
         }
 
-        Ref<EntityStore> ref = interactionContext.getEntity();
-        Player player = commandBuffer.getComponent(ref, Player.getComponentType());
-        if (player == null) {
-            interactionContext.getState().state = InteractionState.Failed;
-            LOGGER.atWarning().log("Player is null");
+        Ref<EntityStore> ref = context.getEntity();
+        PlayerRef playerRef = (PlayerRef) commandBuffer.getComponent(ref, PlayerRef.getComponentType());
+        if (playerRef == null) {
+            context.getState().state = InteractionState.Failed;
+            LOGGER.atWarning().log("PlayerRef is null");
             return;
         }
 
-        ItemStack itemStack = interactionContext.getHeldItem();
+        ItemStack itemStack = context.getHeldItem();
         if (itemStack == null) {
-            interactionContext.getState().state = InteractionState.Failed;
+            context.getState().state = InteractionState.Failed;
             LOGGER.atWarning().log("ItemStack is null");
             return;
         }
@@ -62,14 +64,13 @@ public class PlaceBlueprintInteraction extends SimpleInstantInteraction {
         BlueprintItem blueprint = KingdomsPlugin.getInstance().getItemRegistry().getBlueprint(itemId);
         
         if (blueprint == null) {
-            interactionContext.getState().state = InteractionState.Failed;
+            context.getState().state = InteractionState.Failed;
             LOGGER.atWarning().log("Unknown blueprint item: %s", itemId);
             return;
         }
 
         // Get target position from interaction context
-        // For now, use player position - TODO: get actual raycast hit position
-        var position = interactionContext.getPosition();
+        var position = context.getPosition();
         int x = (int) position.getX();
         int y = (int) position.getY();
         int z = (int) position.getZ();
@@ -82,9 +83,9 @@ public class PlaceBlueprintInteraction extends SimpleInstantInteraction {
             .startConstructionSilent(blueprint.getBuildingType(), x, y, z);
 
         // Send feedback to player
-        player.sendMessage(com.hypixel.hytale.server.core.Message.raw(
+        playerRef.sendMessage(Message.raw(
             "§a⚒ Started construction of " + blueprint.getDisplayName() + "!"));
 
-        interactionContext.getState().state = InteractionState.Completed;
+        context.getState().state = InteractionState.Completed;
     }
 }
