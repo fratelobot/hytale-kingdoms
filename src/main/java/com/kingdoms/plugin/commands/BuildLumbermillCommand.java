@@ -1,18 +1,15 @@
 package com.kingdoms.plugin.commands;
 
 import com.hypixel.hytale.protocol.GameMode;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
-import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.command.system.basecommands.CommandBase;
-import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.kingdoms.plugin.KingdomsPlugin;
 import com.kingdoms.plugin.building.BuildingType;
 
 import javax.annotation.Nonnull;
 
 /**
- * Command to build a Lumbermill at the player's position
+ * Command to build a Lumbermill
  * Usage: /build_lumbermill
  */
 public class BuildLumbermillCommand extends CommandBase {
@@ -20,31 +17,17 @@ public class BuildLumbermillCommand extends CommandBase {
     private final KingdomsPlugin plugin;
 
     public BuildLumbermillCommand(KingdomsPlugin plugin) {
-        super("build_lumbermill", "Start construction of a Lumbermill at your position");
+        super("build_lumbermill", "Start construction of a Lumbermill");
         this.setPermissionGroup(GameMode.Adventure);
         this.plugin = plugin;
     }
 
     @Override
     protected void executeSync(@Nonnull CommandContext ctx) {
-        CommandSender sender = ctx.sender();
-        
-        int x, y, z;
-        
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            var pos = player.getPosition();
-            x = (int) pos.getX();
-            y = (int) pos.getY();
-            z = (int) pos.getZ();
-            
-            ctx.sender().sendMessage(Message.raw("§7Building at your position: (" + x + ", " + y + ", " + z + ")"));
-        } else {
-            x = 10;
-            y = 64;
-            z = 0;
-            ctx.sender().sendMessage(Message.raw("§7Building at default position: (" + x + ", " + y + ", " + z + ")"));
-        }
+        // Fixed position offset from Town Hall
+        int x = 10;
+        int y = 64;
+        int z = 0;
         
         plugin.getBuildingManager().startConstruction(ctx, BuildingType.LUMBERMILL, x, y, z);
     }
