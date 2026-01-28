@@ -45,14 +45,17 @@ public class BuildingManager {
         LOGGER.atInfo().log("Started construction: %s at (%d, %d, %d)", 
             type.getDisplayName(), x, y, z);
         
-        // Place scaffold blocks in the world
+        // Place scaffold blocks in the world (using logged version for now)
         BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(type);
-        worldService.placeBlocks(x, y, z, scaffolds);
+        worldService.placeBlocksLogged(x, y, z, scaffolds);
         
-        ctx.sendMessage(Message.raw("§aStarted construction of " + type.getDisplayName() + "!"));
-        ctx.sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
-        ctx.sendMessage(Message.raw("§7Location: (" + x + ", " + y + ", " + z + ")"));
-        ctx.sendMessage(Message.raw("§e[Scaffold placed: " + scaffolds.length + " blocks]"));
+        // TODO: When we have WorldChunk access, use:
+        // worldService.placeBlocks(chunk, x, y, z, scaffolds, this::resolveBlockType);
+        
+        ctx.sender().sendMessage(Message.raw("§a⚒ Started construction of " + type.getDisplayName() + "!"));
+        ctx.sender().sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
+        ctx.sender().sendMessage(Message.raw("§7Location: (" + x + ", " + y + ", " + z + ")"));
+        ctx.sender().sendMessage(Message.raw("§e[Scaffold: " + scaffolds.length + " blocks]"));
         
         return site;
     }
@@ -82,12 +85,12 @@ public class BuildingManager {
         BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(site.getType());
         BuildingVisuals.BlockPlacement[] buildingBlocks = BuildingVisuals.getBuildingPattern(site.getType());
         
-        worldService.replaceScaffoldWithBuilding(
+        worldService.replaceScaffoldWithBuildingLogged(
             site.getX(), site.getY(), site.getZ(),
             scaffolds, buildingBlocks
         );
         
-        LOGGER.atInfo().log("§aConstruction completed: %s at (%d, %d, %d) - %d blocks placed", 
+        LOGGER.atInfo().log("§a✓ Construction completed: %s at (%d, %d, %d) - %d blocks", 
             site.getType().getDisplayName(),
             site.getX(), site.getY(), site.getZ(),
             buildingBlocks.length);

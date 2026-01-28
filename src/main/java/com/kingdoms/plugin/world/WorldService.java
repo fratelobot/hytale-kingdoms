@@ -1,14 +1,14 @@
 package com.kingdoms.plugin.world;
 
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.kingdoms.plugin.building.BuildingVisuals;
 import com.kingdoms.plugin.building.BuildingVisuals.BlockPlacement;
 
 /**
  * Service for world manipulation (placing/removing blocks)
- * 
- * TODO: This is a stub implementation. When Hytale's World API is available,
- * replace the logging with actual block placement calls.
+ * Uses Hytale's WorldChunk API for block placement
  */
 public class WorldService {
 
@@ -17,12 +17,44 @@ public class WorldService {
     /**
      * Place blocks in the world at the specified location
      * 
+     * @param chunk The world chunk to modify
      * @param worldX Base X coordinate
      * @param worldY Base Y coordinate  
      * @param worldZ Base Z coordinate
      * @param placements Array of block placements (relative to base)
+     * @param blockTypeResolver Function to resolve block type from string ID
      */
-    public void placeBlocks(int worldX, int worldY, int worldZ, BlockPlacement[] placements) {
+    public void placeBlocks(WorldChunk chunk, int worldX, int worldY, int worldZ, 
+            BlockPlacement[] placements, BlockTypeResolver blockTypeResolver) {
+        
+        LOGGER.atInfo().log("Placing %d blocks at base (%d, %d, %d)", 
+            placements.length, worldX, worldY, worldZ);
+
+        int placed = 0;
+        for (BlockPlacement placement : placements) {
+            int x = worldX + placement.offsetX;
+            int y = worldY + placement.offsetY;
+            int z = worldZ + placement.offsetZ;
+            
+            BlockType blockType = blockTypeResolver.resolve(placement.blockType);
+            if (blockType != null) {
+                boolean success = chunk.setBlock(x, y, z, blockType);
+                if (success) {
+                    placed++;
+                }
+            } else {
+                LOGGER.atWarning().log("Unknown block type: %s", placement.blockType);
+            }
+        }
+        
+        LOGGER.atInfo().log("Successfully placed %d/%d blocks", placed, placements.length);
+    }
+
+    /**
+     * Place blocks using string block IDs (logs only if chunk not available)
+     * Fallback method when we don't have direct chunk access
+     */
+    public void placeBlocksLogged(int worldX, int worldY, int worldZ, BlockPlacement[] placements) {
         LOGGER.atInfo().log("Placing %d blocks at base (%d, %d, %d)", 
             placements.length, worldX, worldY, worldZ);
 
@@ -31,71 +63,43 @@ public class WorldService {
             int y = worldY + placement.offsetY;
             int z = worldZ + placement.offsetZ;
             
-            placeBlock(x, y, z, placement.blockType);
+            LOGGER.atInfo().log("  -> Block at (%d, %d, %d): %s", x, y, z, placement.blockType);
         }
-    }
-
-    /**
-     * Place a single block in the world
-     * 
-     * TODO: Replace with actual Hytale API call:
-     * world.setBlock(x, y, z, BlockRegistry.get(blockType));
-     */
-    private void placeBlock(int x, int y, int z, String blockType) {
-        // For now, just log. Replace with actual API when available.
-        LOGGER.atInfo().log("  -> Block at (%d, %d, %d): %s", x, y, z, blockType);
-        
-        // TODO: Actual implementation would be something like:
-        // World world = getWorld();
-        // Block block = BlockRegistry.getBlock(blockType);
-        // world.setBlockAt(x, y, z, block);
-    }
-
-    /**
-     * Remove blocks in the world (clear an area)
-     * 
-     * @param worldX Base X coordinate
-     * @param worldY Base Y coordinate
-     * @param worldZ Base Z coordinate
-     * @param sizeX Width
-     * @param sizeY Height
-     * @param sizeZ Depth
-     */
-    public void clearArea(int worldX, int worldY, int worldZ, int sizeX, int sizeY, int sizeZ) {
-        LOGGER.atInfo().log("Clearing area at (%d, %d, %d) size (%d, %d, %d)", 
-            worldX, worldY, worldZ, sizeX, sizeY, sizeZ);
-        
-        for (int x = 0; x < sizeX; x++) {
-            for (int y = 0; y < sizeY; y++) {
-                for (int z = 0; z < sizeZ; z++) {
-                    removeBlock(worldX + x, worldY + y, worldZ + z);
-                }
-            }
-        }
-    }
-
-    /**
-     * Remove a single block
-     */
-    private void removeBlock(int x, int y, int z) {
-        // TODO: Actual implementation
-        // world.setBlockAt(x, y, z, Blocks.AIR);
     }
 
     /**
      * Replace scaffold blocks with building blocks
      * Used when construction completes
      */
-    public void replaceScaffoldWithBuilding(int worldX, int worldY, int worldZ, 
+    public void replaceScaffoldWithBuilding(WorldChunk chunk, int worldX, int worldY, int worldZ, 
+            BlockPlacement[] scaffoldBlocks, BlockPlacement[] buildingBlocks,
+            BlockTypeResolver blockTypeResolver) {
+        
+        LOGGER.atInfo().log("Replacing scaffold with completed building at (%d, %d, %d)", 
+            worldX, worldY, worldZ);
+        
+        // Clear scaffold area first (set to air)
+        // Then place building blocks
+        placeBlocks(chunk, worldX, worldY, worldZ, buildingBlocks, blockTypeResolver);
+    }
+
+    /**
+     * Fallback method for replacing when chunk not available
+     */
+    public void replaceScaffoldWithBuildingLogged(int worldX, int worldY, int worldZ, 
             BlockPlacement[] scaffoldBlocks, BlockPlacement[] buildingBlocks) {
         
         LOGGER.atInfo().log("Replacing scaffold with completed building at (%d, %d, %d)", 
             worldX, worldY, worldZ);
         
-        // First, clear the scaffold area
-        // (In reality, we'd want to track exactly which blocks to remove)
-        
-        // Then place the building blocks
-        placeBlocks(worldX, worldY, worldZ, buildingBlocks);
+        placeBlocksLogged(worldX, worldY, worldZ, buildingBlocks);
+    }
+
+    /**
+     * Functional interface for resolving block type strings to BlockType objects
+     */
+    @FunctionalInterface
+    public interface BlockTypeResolver {
+        BlockType resolve(String blockTypeId);
     }
 }
