@@ -69,14 +69,13 @@ public class PlaceBlueprintInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        // Get target position from interaction context
-        var position = context.getPosition();
-        int x = (int) position.getX();
-        int y = (int) position.getY();
-        int z = (int) position.getZ();
+        // For now, use a fixed position offset from player
+        // TODO: Get actual raycast hit position from context metadata
+        int x = 0;
+        int y = 0; 
+        int z = 0;
 
-        LOGGER.atInfo().log("Placing blueprint %s at (%d, %d, %d)", 
-            blueprint.getDisplayName(), x, y, z);
+        LOGGER.atInfo().log("Placing blueprint %s", blueprint.getDisplayName());
 
         // Start construction
         KingdomsPlugin.getInstance().getBuildingManager()
@@ -86,6 +85,6 @@ public class PlaceBlueprintInteraction extends SimpleInstantInteraction {
         playerRef.sendMessage(Message.raw(
             "§a⚒ Started construction of " + blueprint.getDisplayName() + "!"));
 
-        context.getState().state = InteractionState.Completed;
+        // Success - don't set Failed state
     }
 }
