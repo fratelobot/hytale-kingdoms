@@ -1,8 +1,6 @@
 package com.kingdoms.plugin.building;
 
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.kingdoms.plugin.KingdomsPlugin;
 import com.kingdoms.plugin.world.WorldService;
 
@@ -36,37 +34,20 @@ public class BuildingManager {
     }
 
     /**
-     * Start construction of a building at the given location (with player feedback)
-     */
-    public ConstructionSite startConstruction(CommandContext ctx, BuildingType type, int x, int y, int z) {
-        ConstructionSite site = startConstructionSilent(type, x, y, z);
-        
-        // Send feedback to player
-        BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(type);
-        ctx.sender().sendMessage(Message.raw("§a⚒ Started construction of " + type.getDisplayName() + "!"));
-        ctx.sender().sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
-        ctx.sender().sendMessage(Message.raw("§7Location: (" + x + ", " + y + ", " + z + ")"));
-        ctx.sender().sendMessage(Message.raw("§e[Scaffold: " + scaffolds.length + " blocks]"));
-        
-        return site;
-    }
-
-    /**
-     * Start construction without player feedback (for event-based placement)
+     * Start construction of a building at the given location
      */
     public ConstructionSite startConstructionSilent(BuildingType type, int x, int y, int z) {
         ConstructionSite site = new ConstructionSite(type, x, y, z);
         constructionSites.add(site);
         
-        LOGGER.atInfo().log("Started construction: %s at (%d, %d, %d)", 
-            type.getDisplayName(), x, y, z);
+        LOGGER.atInfo().log("Started construction: %s at (%d, %d, %d) - Build time: %ds", 
+            type.getDisplayName(), x, y, z, type.getBuildTimeSeconds());
         
         // Place scaffold blocks in the world (using logged version for now)
         BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(type);
         worldService.placeBlocksLogged(x, y, z, scaffolds);
         
-        // TODO: When we have WorldChunk access, use:
-        // worldService.placeBlocks(chunk, x, y, z, scaffolds, this::resolveBlockType);
+        LOGGER.atInfo().log("Placed %d scaffold blocks", scaffolds.length);
         
         return site;
     }
@@ -101,7 +82,7 @@ public class BuildingManager {
             scaffolds, buildingBlocks
         );
         
-        LOGGER.atInfo().log("§a✓ Construction completed: %s at (%d, %d, %d) - %d blocks", 
+        LOGGER.atInfo().log("Construction completed: %s at (%d, %d, %d) - %d blocks", 
             site.getType().getDisplayName(),
             site.getX(), site.getY(), site.getZ(),
             buildingBlocks.length);
