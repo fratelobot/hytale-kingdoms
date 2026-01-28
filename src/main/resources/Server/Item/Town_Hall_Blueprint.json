@@ -1,11 +1,10 @@
 {
-  "Id": "kingdoms:town_hall_blueprint",
+  "Id": "Town_Hall_Blueprint",
   "Parent": "hytale:item",
   "TranslationProperties": {
     "Name": "Town Hall Blueprint",
     "Description": "Place to start construction of a Town Hall"
   },
-  "Icon": "Icons/Items/kingdoms_town_hall_blueprint.png",
   "MaxStack": 1,
-  "Categories": ["kingdoms_blueprints"]
+  "Categories": ["tools"]
 }
