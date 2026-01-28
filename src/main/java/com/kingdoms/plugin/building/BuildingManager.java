@@ -4,6 +4,7 @@ import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.kingdoms.plugin.KingdomsPlugin;
+import com.kingdoms.plugin.world.WorldService;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -16,12 +17,14 @@ public class BuildingManager {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     
     private final KingdomsPlugin plugin;
+    private final WorldService worldService;
     private final List<ConstructionSite> constructionSites;
     private final List<Building> completedBuildings;
     private final ScheduledExecutorService scheduler;
     
     public BuildingManager(KingdomsPlugin plugin) {
         this.plugin = plugin;
+        this.worldService = new WorldService();
         this.constructionSites = new CopyOnWriteArrayList<>();
         this.completedBuildings = new CopyOnWriteArrayList<>();
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -33,18 +36,37 @@ public class BuildingManager {
     }
 
     /**
-     * Start construction of a building at the given location
+     * Start construction of a building at the given location (with player feedback)
      */
     public ConstructionSite startConstruction(CommandContext ctx, BuildingType type, int x, int y, int z) {
+        ConstructionSite site = startConstructionSilent(type, x, y, z);
+        
+        // Send feedback to player
+        BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(type);
+        ctx.sender().sendMessage(Message.raw("§a⚒ Started construction of " + type.getDisplayName() + "!"));
+        ctx.sender().sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
+        ctx.sender().sendMessage(Message.raw("§7Location: (" + x + ", " + y + ", " + z + ")"));
+        ctx.sender().sendMessage(Message.raw("§e[Scaffold: " + scaffolds.length + " blocks]"));
+        
+        return site;
+    }
+
+    /**
+     * Start construction without player feedback (for event-based placement)
+     */
+    public ConstructionSite startConstructionSilent(BuildingType type, int x, int y, int z) {
         ConstructionSite site = new ConstructionSite(type, x, y, z);
         constructionSites.add(site);
         
         LOGGER.atInfo().log("Started construction: %s at (%d, %d, %d)", 
             type.getDisplayName(), x, y, z);
         
-        ctx.sendMessage(Message.raw("§aStarted construction of " + type.getDisplayName() + "!"));
-        ctx.sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
-        ctx.sendMessage(Message.raw("§7Location: (" + x + ", " + y + ", " + z + ")"));
+        // Place scaffold blocks in the world (using logged version for now)
+        BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(type);
+        worldService.placeBlocksLogged(x, y, z, scaffolds);
+        
+        // TODO: When we have WorldChunk access, use:
+        // worldService.placeBlocks(chunk, x, y, z, scaffolds, this::resolveBlockType);
         
         return site;
     }
@@ -70,9 +92,19 @@ public class BuildingManager {
         Building building = new Building(site);
         completedBuildings.add(building);
         
-        LOGGER.atInfo().log("§aConstruction completed: %s at (%d, %d, %d)", 
+        // Replace scaffold with actual building
+        BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(site.getType());
+        BuildingVisuals.BlockPlacement[] buildingBlocks = BuildingVisuals.getBuildingPattern(site.getType());
+        
+        worldService.replaceScaffoldWithBuildingLogged(
+            site.getX(), site.getY(), site.getZ(),
+            scaffolds, buildingBlocks
+        );
+        
+        LOGGER.atInfo().log("§a✓ Construction completed: %s at (%d, %d, %d) - %d blocks", 
             site.getType().getDisplayName(),
-            site.getX(), site.getY(), site.getZ());
+            site.getX(), site.getY(), site.getZ(),
+            buildingBlocks.length);
     }
 
     /**

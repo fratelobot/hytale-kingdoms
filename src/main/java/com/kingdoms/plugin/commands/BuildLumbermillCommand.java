@@ -16,15 +16,15 @@ import com.kingdoms.plugin.building.BuildingType;
 import javax.annotation.Nonnull;
 
 /**
- * Command to build a Town Hall at the player's position
- * Usage: /build_townhall
+ * Command to build a Lumbermill at the player's position
+ * Usage: /build_lumbermill
  */
-public class BuildTownHallCommand extends AbstractPlayerCommand {
+public class BuildLumbermillCommand extends AbstractPlayerCommand {
 
     private final KingdomsPlugin plugin;
 
-    public BuildTownHallCommand(KingdomsPlugin plugin) {
-        super("build_townhall", "server.commands.kingdoms.build_townhall.desc");
+    public BuildLumbermillCommand(KingdomsPlugin plugin) {
+        super("build_lumbermill", "server.commands.kingdoms.build_lumbermill.desc");
         this.setPermissionGroup(GameMode.Adventure);
         this.plugin = plugin;
     }
@@ -36,7 +36,6 @@ public class BuildTownHallCommand extends AbstractPlayerCommand {
                           @Nonnull PlayerRef playerRef, 
                           @Nonnull World world) {
         
-        // Get player position from TransformComponent
         TransformComponent transform = (TransformComponent) store.getComponent(ref, TransformComponent.getComponentType());
         assert transform != null;
         
@@ -45,6 +44,6 @@ public class BuildTownHallCommand extends AbstractPlayerCommand {
         int y = (int) position.getY();
         int z = (int) position.getZ();
         
-        plugin.getBuildingManager().startConstruction(context, BuildingType.TOWN_HALL, x, y, z);
+        plugin.getBuildingManager().startConstruction(context, BuildingType.LUMBERMILL, x, y, z);
     }
 }
