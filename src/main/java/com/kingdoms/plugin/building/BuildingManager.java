@@ -4,6 +4,7 @@ import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.kingdoms.plugin.KingdomsPlugin;
+import com.kingdoms.plugin.world.WorldService;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -16,12 +17,14 @@ public class BuildingManager {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     
     private final KingdomsPlugin plugin;
+    private final WorldService worldService;
     private final List<ConstructionSite> constructionSites;
     private final List<Building> completedBuildings;
     private final ScheduledExecutorService scheduler;
     
     public BuildingManager(KingdomsPlugin plugin) {
         this.plugin = plugin;
+        this.worldService = new WorldService();
         this.constructionSites = new CopyOnWriteArrayList<>();
         this.completedBuildings = new CopyOnWriteArrayList<>();
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -42,9 +45,14 @@ public class BuildingManager {
         LOGGER.atInfo().log("Started construction: %s at (%d, %d, %d)", 
             type.getDisplayName(), x, y, z);
         
+        // Place scaffold blocks in the world
+        BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(type);
+        worldService.placeBlocks(x, y, z, scaffolds);
+        
         ctx.sendMessage(Message.raw("§aStarted construction of " + type.getDisplayName() + "!"));
         ctx.sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
         ctx.sendMessage(Message.raw("§7Location: (" + x + ", " + y + ", " + z + ")"));
+        ctx.sendMessage(Message.raw("§e[Scaffold placed: " + scaffolds.length + " blocks]"));
         
         return site;
     }
@@ -70,9 +78,19 @@ public class BuildingManager {
         Building building = new Building(site);
         completedBuildings.add(building);
         
-        LOGGER.atInfo().log("§aConstruction completed: %s at (%d, %d, %d)", 
+        // Replace scaffold with actual building
+        BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(site.getType());
+        BuildingVisuals.BlockPlacement[] buildingBlocks = BuildingVisuals.getBuildingPattern(site.getType());
+        
+        worldService.replaceScaffoldWithBuilding(
+            site.getX(), site.getY(), site.getZ(),
+            scaffolds, buildingBlocks
+        );
+        
+        LOGGER.atInfo().log("§aConstruction completed: %s at (%d, %d, %d) - %d blocks placed", 
             site.getType().getDisplayName(),
-            site.getX(), site.getY(), site.getZ());
+            site.getX(), site.getY(), site.getZ(),
+            buildingBlocks.length);
     }
 
     /**
