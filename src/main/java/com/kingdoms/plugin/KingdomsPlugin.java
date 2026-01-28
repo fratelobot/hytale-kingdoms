@@ -5,6 +5,8 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.kingdoms.plugin.building.BuildingManager;
 import com.kingdoms.plugin.commands.BuildingCommand;
+import com.kingdoms.plugin.commands.BuildTownHallCommand;
+import com.kingdoms.plugin.commands.ListBuildingsCommand;
 
 import javax.annotation.Nonnull;
 
@@ -33,8 +35,10 @@ public class KingdomsPlugin extends JavaPlugin {
         
         // Register commands
         this.getCommandRegistry().registerCommand(new BuildingCommand(this));
+        this.getCommandRegistry().registerCommand(new BuildTownHallCommand(this));
+        this.getCommandRegistry().registerCommand(new ListBuildingsCommand(this));
         
-        LOGGER.atInfo().log("Kingdoms plugin ready!");
+        LOGGER.atInfo().log("Kingdoms plugin ready! Commands: /buildings, /build_townhall, /list_buildings");
     }
 
     @Override

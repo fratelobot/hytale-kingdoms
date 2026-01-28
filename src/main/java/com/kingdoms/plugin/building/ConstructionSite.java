@@ -8,7 +8,6 @@ import java.util.UUID;
 public class ConstructionSite {
     
     private final UUID id;
-    private final UUID ownerId;
     private final BuildingType type;
     private final int x;
     private final int y;
@@ -17,9 +16,8 @@ public class ConstructionSite {
     
     private boolean completed;
 
-    public ConstructionSite(UUID ownerId, BuildingType type, int x, int y, int z) {
+    public ConstructionSite(BuildingType type, int x, int y, int z) {
         this.id = UUID.randomUUID();
-        this.ownerId = ownerId;
         this.type = type;
         this.x = x;
         this.y = y;
@@ -30,10 +28,6 @@ public class ConstructionSite {
 
     public UUID getId() {
         return id;
-    }
-
-    public UUID getOwnerId() {
-        return ownerId;
     }
 
     public BuildingType getType() {

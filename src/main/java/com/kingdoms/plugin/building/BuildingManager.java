@@ -2,7 +2,7 @@ package com.kingdoms.plugin.building;
 
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.player.Player;
+import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.kingdoms.plugin.KingdomsPlugin;
 
 import java.util.*;
@@ -16,14 +16,14 @@ public class BuildingManager {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     
     private final KingdomsPlugin plugin;
-    private final Map<UUID, ConstructionSite> constructionSites;
-    private final Map<UUID, Building> completedBuildings;
+    private final List<ConstructionSite> constructionSites;
+    private final List<Building> completedBuildings;
     private final ScheduledExecutorService scheduler;
     
     public BuildingManager(KingdomsPlugin plugin) {
         this.plugin = plugin;
-        this.constructionSites = new ConcurrentHashMap<>();
-        this.completedBuildings = new ConcurrentHashMap<>();
+        this.constructionSites = new CopyOnWriteArrayList<>();
+        this.completedBuildings = new CopyOnWriteArrayList<>();
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         
         // Check construction progress every second
@@ -35,17 +35,16 @@ public class BuildingManager {
     /**
      * Start construction of a building at the given location
      */
-    public ConstructionSite startConstruction(Player player, BuildingType type, int x, int y, int z) {
-        ConstructionSite site = new ConstructionSite(player.getUuid(), type, x, y, z);
-        constructionSites.put(site.getId(), site);
+    public ConstructionSite startConstruction(CommandContext ctx, BuildingType type, int x, int y, int z) {
+        ConstructionSite site = new ConstructionSite(type, x, y, z);
+        constructionSites.add(site);
         
-        LOGGER.atInfo().log("Started construction: %s at (%d, %d, %d) by %s", 
-            type.getDisplayName(), x, y, z, player.getName());
+        LOGGER.atInfo().log("Started construction: %s at (%d, %d, %d)", 
+            type.getDisplayName(), x, y, z);
         
-        player.sendMessage(Message.raw("§aStarted construction of " + type.getDisplayName() + "!"));
-        player.sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
-        
-        // TODO: Place visual construction site blocks in the world
+        ctx.sendMessage(Message.raw("§aStarted construction of " + type.getDisplayName() + "!"));
+        ctx.sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
+        ctx.sendMessage(Message.raw("§7Location: (" + x + ", " + y + ", " + z + ")"));
         
         return site;
     }
@@ -54,16 +53,10 @@ public class BuildingManager {
      * Check all construction sites and complete finished ones
      */
     private void checkConstructions() {
-        List<ConstructionSite> toComplete = new ArrayList<>();
-        
-        for (ConstructionSite site : constructionSites.values()) {
+        for (ConstructionSite site : constructionSites) {
             if (site.isFinished() && !site.isCompleted()) {
-                toComplete.add(site);
+                completeConstruction(site);
             }
-        }
-        
-        for (ConstructionSite site : toComplete) {
-            completeConstruction(site);
         }
     }
 
@@ -72,44 +65,28 @@ public class BuildingManager {
      */
     private void completeConstruction(ConstructionSite site) {
         site.setCompleted(true);
-        constructionSites.remove(site.getId());
+        constructionSites.remove(site);
         
         Building building = new Building(site);
-        completedBuildings.put(building.getId(), building);
+        completedBuildings.add(building);
         
-        LOGGER.atInfo().log("Construction completed: %s", site);
-        
-        // TODO: Replace construction blocks with actual building
-        // TODO: Notify the player (need to get player from UUID)
-        
-        // For now, log it
-        LOGGER.atInfo().log("§a%s construction complete!", site.getType().getDisplayName());
+        LOGGER.atInfo().log("§aConstruction completed: %s at (%d, %d, %d)", 
+            site.getType().getDisplayName(),
+            site.getX(), site.getY(), site.getZ());
     }
 
     /**
-     * Get all construction sites for a player
+     * Get all active construction sites
      */
-    public List<ConstructionSite> getPlayerConstructions(UUID playerId) {
-        List<ConstructionSite> result = new ArrayList<>();
-        for (ConstructionSite site : constructionSites.values()) {
-            if (site.getOwnerId().equals(playerId)) {
-                result.add(site);
-            }
-        }
-        return result;
+    public List<ConstructionSite> getConstructionSites() {
+        return new ArrayList<>(constructionSites);
     }
 
     /**
-     * Get all completed buildings for a player
+     * Get all completed buildings
      */
-    public List<Building> getPlayerBuildings(UUID playerId) {
-        List<Building> result = new ArrayList<>();
-        for (Building building : completedBuildings.values()) {
-            if (building.getOwnerId().equals(playerId)) {
-                result.add(building);
-            }
-        }
-        return result;
+    public List<Building> getCompletedBuildings() {
+        return new ArrayList<>(completedBuildings);
     }
 
     public void shutdown() {

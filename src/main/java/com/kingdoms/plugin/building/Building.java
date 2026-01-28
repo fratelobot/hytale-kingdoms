@@ -8,7 +8,6 @@ import java.util.UUID;
 public class Building {
     
     private final UUID id;
-    private final UUID ownerId;
     private final BuildingType type;
     private final int x;
     private final int y;
@@ -17,7 +16,6 @@ public class Building {
 
     public Building(ConstructionSite site) {
         this.id = site.getId();
-        this.ownerId = site.getOwnerId();
         this.type = site.getType();
         this.x = site.getX();
         this.y = site.getY();
@@ -27,10 +25,6 @@ public class Building {
 
     public UUID getId() {
         return id;
-    }
-
-    public UUID getOwnerId() {
-        return ownerId;
     }
 
     public BuildingType getType() {
