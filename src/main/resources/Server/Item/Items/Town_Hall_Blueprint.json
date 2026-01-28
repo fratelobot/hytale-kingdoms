@@ -1,0 +1,22 @@
+{
+  "TranslationProperties": {
+    "Name": "Town Hall Blueprint",
+    "Description": "Place to start construction of a Town Hall"
+  },
+  "Id": "Town_Hall_Blueprint",
+  "Icon": "Icons/ItemsGenerated/blueprint.png",
+  "Quality": "Common",
+  "MaxStack": 1,
+  "Categories": [
+    "Items.Tools"
+  ],
+  "Interactions": {
+    "Secondary": {
+      "Interactions": [
+        {
+          "Type": "kingdoms_place_blueprint"
+        }
+      ]
+    }
+  }
+}

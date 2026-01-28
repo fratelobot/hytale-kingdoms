@@ -1,0 +1,22 @@
+{
+  "TranslationProperties": {
+    "Name": "Farm Blueprint",
+    "Description": "Place to start construction of a Farm"
+  },
+  "Id": "Farm_Blueprint",
+  "Icon": "Icons/ItemsGenerated/blueprint.png",
+  "Quality": "Common",
+  "MaxStack": 1,
+  "Categories": [
+    "Items.Tools"
+  ],
+  "Interactions": {
+    "Secondary": {
+      "Interactions": [
+        {
+          "Type": "kingdoms_place_blueprint"
+        }
+      ]
+    }
+  }
+}

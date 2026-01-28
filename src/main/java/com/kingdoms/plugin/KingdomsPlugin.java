@@ -1,11 +1,12 @@
 package com.kingdoms.plugin;
 
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.modules.interaction.interaction.Interaction;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.kingdoms.plugin.building.BuildingManager;
+import com.kingdoms.plugin.interactions.PlaceBlueprintInteraction;
 import com.kingdoms.plugin.items.ItemRegistry;
-import com.kingdoms.plugin.listeners.BlueprintPlacementListener;
 
 import javax.annotation.Nonnull;
 
@@ -16,7 +17,7 @@ import javax.annotation.Nonnull;
  * 
  * Usage:
  * 1. Get blueprint item: /give <player> Town_Hall_Blueprint
- * 2. Place blueprint on ground
+ * 2. Right-click with blueprint to place
  * 3. Construction site spawns
  * 4. Wait for build timer
  * 5. Building complete!
@@ -28,7 +29,6 @@ public class KingdomsPlugin extends JavaPlugin {
     
     private BuildingManager buildingManager;
     private ItemRegistry itemRegistry;
-    private BlueprintPlacementListener blueprintListener;
 
     public KingdomsPlugin(@Nonnull JavaPluginInit init) {
         super(init);
@@ -40,6 +40,14 @@ public class KingdomsPlugin extends JavaPlugin {
     protected void setup() {
         LOGGER.atInfo().log("Setting up Kingdoms plugin");
         
+        // Register custom interaction for placing blueprints
+        this.getCodecRegistry(Interaction.CODEC).register(
+            "kingdoms_place_blueprint", 
+            PlaceBlueprintInteraction.class, 
+            PlaceBlueprintInteraction.CODEC
+        );
+        LOGGER.atInfo().log("Registered kingdoms_place_blueprint interaction");
+        
         // Initialize registries
         this.itemRegistry = new ItemRegistry(this);
         this.itemRegistry.registerItems();
@@ -47,34 +55,22 @@ public class KingdomsPlugin extends JavaPlugin {
         // Initialize managers
         this.buildingManager = new BuildingManager(this);
         
-        // Initialize listeners
-        this.blueprintListener = new BlueprintPlacementListener(this);
-        
         LOGGER.atInfo().log("Kingdoms plugin ready!");
     }
     
     @Override
     protected void start() {
-        LOGGER.atInfo().log("Kingdoms plugin starting...");
-        
-        // Register event listeners
-        blueprintListener.register();
-        
         LOGGER.atInfo().log("Kingdoms plugin started!");
         LOGGER.atInfo().log("Available blueprints:");
         LOGGER.atInfo().log("  /give <player> Town_Hall_Blueprint");
         LOGGER.atInfo().log("  /give <player> Lumbermill_Blueprint");
         LOGGER.atInfo().log("  /give <player> Farm_Blueprint");
+        LOGGER.atInfo().log("Right-click with blueprint to place construction site!");
     }
 
     @Override
     public void shutdown() {
         LOGGER.atInfo().log("Kingdoms plugin shutting down...");
-        
-        // Unregister listeners
-        if (blueprintListener != null) {
-            blueprintListener.unregister();
-        }
         
         // Shutdown managers
         if (buildingManager != null) {
