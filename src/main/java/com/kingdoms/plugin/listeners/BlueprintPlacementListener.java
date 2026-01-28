@@ -76,7 +76,7 @@ public class BlueprintPlacementListener {
         }
         
         // Cancel the default block placement
-        event.cancel();
+        event.setCancelled(true);
         
         // Get placement position
         Vector3i targetBlock = event.getTargetBlock();
