@@ -33,10 +33,10 @@ public class BuildLumbermillCommand extends CommandBase {
         
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            var pos = player.getBlockPosition();
-            x = pos.getX();
-            y = pos.getY();
-            z = pos.getZ();
+            var pos = player.getPosition();
+            x = (int) pos.getX();
+            y = (int) pos.getY();
+            z = (int) pos.getZ();
             
             ctx.sender().sendMessage(Message.raw("§7Building at your position: (" + x + ", " + y + ", " + z + ")"));
         } else {
