@@ -36,9 +36,25 @@ public class BuildingManager {
     }
 
     /**
-     * Start construction of a building at the given location
+     * Start construction of a building at the given location (with player feedback)
      */
     public ConstructionSite startConstruction(CommandContext ctx, BuildingType type, int x, int y, int z) {
+        ConstructionSite site = startConstructionSilent(type, x, y, z);
+        
+        // Send feedback to player
+        BuildingVisuals.BlockPlacement[] scaffolds = BuildingVisuals.getScaffoldPattern(type);
+        ctx.sender().sendMessage(Message.raw("§a⚒ Started construction of " + type.getDisplayName() + "!"));
+        ctx.sender().sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
+        ctx.sender().sendMessage(Message.raw("§7Location: (" + x + ", " + y + ", " + z + ")"));
+        ctx.sender().sendMessage(Message.raw("§e[Scaffold: " + scaffolds.length + " blocks]"));
+        
+        return site;
+    }
+
+    /**
+     * Start construction without player feedback (for event-based placement)
+     */
+    public ConstructionSite startConstructionSilent(BuildingType type, int x, int y, int z) {
         ConstructionSite site = new ConstructionSite(type, x, y, z);
         constructionSites.add(site);
         
@@ -51,11 +67,6 @@ public class BuildingManager {
         
         // TODO: When we have WorldChunk access, use:
         // worldService.placeBlocks(chunk, x, y, z, scaffolds, this::resolveBlockType);
-        
-        ctx.sender().sendMessage(Message.raw("§a⚒ Started construction of " + type.getDisplayName() + "!"));
-        ctx.sender().sendMessage(Message.raw("§7Build time: " + type.getBuildTimeSeconds() + " seconds"));
-        ctx.sender().sendMessage(Message.raw("§7Location: (" + x + ", " + y + ", " + z + ")"));
-        ctx.sender().sendMessage(Message.raw("§e[Scaffold: " + scaffolds.length + " blocks]"));
         
         return site;
     }

@@ -5,6 +5,7 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.kingdoms.plugin.building.BuildingManager;
 import com.kingdoms.plugin.commands.*;
+import com.kingdoms.plugin.listeners.BlueprintPlacementListener;
 
 import javax.annotation.Nonnull;
 
@@ -19,6 +20,7 @@ public class KingdomsPlugin extends JavaPlugin {
     private static KingdomsPlugin instance;
     
     private BuildingManager buildingManager;
+    private BlueprintPlacementListener blueprintListener;
 
     public KingdomsPlugin(@Nonnull JavaPluginInit init) {
         super(init);
@@ -33,11 +35,25 @@ public class KingdomsPlugin extends JavaPlugin {
         // Initialize managers
         this.buildingManager = new BuildingManager(this);
         
+        // Initialize listeners
+        this.blueprintListener = new BlueprintPlacementListener(this);
+        
         // Register commands
         registerCommands();
         
         LOGGER.atInfo().log("Kingdoms plugin ready!");
         LOGGER.atInfo().log("Commands: /buildings, /build, /build_townhall, /build_lumbermill, /build_farm, /list_buildings");
+    }
+    
+    @Override
+    protected void start() {
+        LOGGER.atInfo().log("Kingdoms plugin starting...");
+        
+        // Register event listeners
+        blueprintListener.register();
+        
+        LOGGER.atInfo().log("Kingdoms plugin started!");
+        LOGGER.atInfo().log("Place blueprint items to start construction!");
     }
     
     private void registerCommands() {
@@ -48,20 +64,22 @@ public class KingdomsPlugin extends JavaPlugin {
         // Generic build command
         this.getCommandRegistry().registerCommand(new BuildCommand(this));
         
-        // Quick build commands
+        // Quick build commands (for testing)
         this.getCommandRegistry().registerCommand(new BuildTownHallCommand(this));
         this.getCommandRegistry().registerCommand(new BuildLumbermillCommand(this));
         this.getCommandRegistry().registerCommand(new BuildFarmCommand(this));
     }
 
     @Override
-    protected void start() {
-        LOGGER.atInfo().log("Kingdoms plugin started!");
-    }
-
-    @Override
     public void shutdown() {
         LOGGER.atInfo().log("Kingdoms plugin shutting down...");
+        
+        // Unregister listeners
+        if (blueprintListener != null) {
+            blueprintListener.unregister();
+        }
+        
+        // Shutdown managers
         if (buildingManager != null) {
             buildingManager.shutdown();
         }

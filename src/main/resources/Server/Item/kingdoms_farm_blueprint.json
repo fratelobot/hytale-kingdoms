@@ -1,0 +1,11 @@
+{
+  "Id": "kingdoms:farm_blueprint",
+  "Parent": "hytale:item",
+  "TranslationProperties": {
+    "Name": "Farm Blueprint",
+    "Description": "Place to start construction of a Farm"
+  },
+  "Icon": "Icons/Items/kingdoms_farm_blueprint.png",
+  "MaxStack": 1,
+  "Categories": ["kingdoms_blueprints"]
+}
