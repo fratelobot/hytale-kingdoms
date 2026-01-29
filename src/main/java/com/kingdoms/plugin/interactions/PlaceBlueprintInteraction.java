@@ -4,6 +4,7 @@ import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionState;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.server.core.Message;
@@ -69,13 +70,21 @@ public class PlaceBlueprintInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        // For now, use a fixed position offset from player
-        // TODO: Get actual raycast hit position from context metadata
-        int x = 0;
-        int y = 0; 
-        int z = 0;
+        // Get the target block position from raycast
+        BlockPosition targetBlock = context.getTargetBlock();
+        if (targetBlock == null) {
+            context.getState().state = InteractionState.Failed;
+            LOGGER.atWarning().log("No target block - player must be looking at a valid surface");
+            playerRef.sendMessage(Message.raw("§cYou must be looking at a valid surface to place a blueprint!"));
+            return;
+        }
 
-        LOGGER.atInfo().log("Placing blueprint %s", blueprint.getDisplayName());
+        // Place construction site one block above the target (on top of the clicked block)
+        int x = targetBlock.x;
+        int y = targetBlock.y + 1;
+        int z = targetBlock.z;
+
+        LOGGER.atInfo().log("Placing blueprint %s at (%d, %d, %d)", blueprint.getDisplayName(), x, y, z);
 
         // Start construction
         KingdomsPlugin.getInstance().getBuildingManager()
