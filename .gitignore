@@ -59,3 +59,5 @@ desktop.ini
 # Template specific
 libs/HytaleServer.jar
 buildSrc/
+# Server API documentation (local reference)
+docs-server-api/
